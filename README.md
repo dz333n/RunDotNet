@@ -2,7 +2,7 @@
 
 Open-sourced tool to invoke entry points in .NET assemblies with selected runtime and exception handling.
 
-## System Requirement
+## System Requirements
 
 Supported operating systems:
 - Linux (x86/x64/ARM) (netcoreapp2.1)
