@@ -1,6 +1,6 @@
 # RunDotNet
 
-Open-sourced tool to invoke entry points in .NET assemblies with choosen runtime and exception handling.
+Open-sourced tool to invoke entry points in .NET assemblies with selected runtime and exception handling.
 
 ## System Requirement
 
