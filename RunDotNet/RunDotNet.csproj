@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net20;net30;net35;net40;net45;net46;net461;net471;netcoreapp2.1</TargetFrameworks>
+	<RuntimeIdentifiers>win;linux-arm;linux-x86;linux-x64</RuntimeIdentifiers>
+	<AssemblyName>RunDotNet</AssemblyName>
+	<StartupObject>RunDotNet.Program</StartupObject>
+  </PropertyGroup>
+
+</Project>

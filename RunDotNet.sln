@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.329
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FallDotNet", "FallDotNet\FallDotNet.csproj", "{884B84E7-6522-4B2F-9F0D-EDF9BCCD0E18}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RunDotNet", "RunDotNet\RunDotNet.csproj", "{884B84E7-6522-4B2F-9F0D-EDF9BCCD0E18}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
