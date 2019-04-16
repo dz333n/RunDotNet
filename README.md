@@ -16,6 +16,7 @@ Supported operating systems:
 - Windows 8(.1) (x86/x64) (all versions)
 - Windows 10 (x86/x64) (all versions)
 
+
 * loads even net35 assemblies :O
 
 ** not supported, but can be used with *hack*
