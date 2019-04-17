@@ -16,27 +16,31 @@ namespace RunDotNet
                 return;
             }
 
+            ConLine("OS: " + Environment.OSVersion.ToString());
+            ConLine(".NET: " + Environment.Version.ToString());
             var asmf = new FileInfo(args[0]);
 
             if (!asmf.Exists)
             {
-                Console.WriteLine($"Assembly '{asmf.FullName}' not found.");
+                ConLine($"Assembly '{asmf.FullName}' not found.");
                 return;
             }
             
             Directory.SetCurrentDirectory(asmf.Directory.FullName);
-            Console.WriteLine($"Current directory: {Directory.GetCurrentDirectory()}");
+            ConLine($"Current directory: {Directory.GetCurrentDirectory()}");
 
             Assembly asm;
 
             try
             {
+                AppDomain.CurrentDomain.AssemblyLoad += CurrentDomain_AssemblyLoad;
                 asm = Assembly.LoadFile(asmf.FullName);
+                // ConLine($"Assembly loaded: {asm}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Can't load assembly '{asmf.FullName}'");
-                Console.WriteLine(ex.ToString());
+                ConLine($"Can't load assembly '{asmf.FullName}'");
+                ConLine(ex.ToString());
                 return;
             }
 
@@ -63,53 +67,118 @@ namespace RunDotNet
                 ProgramArgs.Add(arg);
             }
 
-            if (EntryPoint == null) return;
+            if (EntryPoint == null)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                ConLine("Entry point not found.");
+                Console.ForegroundColor = ConsoleColor.Gray;
+                return;
+            }
+            else PrintMethod(EntryPoint);
 
             object[] margs = new object[] { };
 
-            Console.WriteLine("Invoking that method...");
         
             var p = EntryPoint.GetParameters();
 
             if (p.Length >= 1 && p[0].ParameterType.Name == typeof(string[]).Name)
             {
-                Console.WriteLine($"Putting arguments in parameter '{p[0].Name}'.");
+                ConLine($"Putting arguments in parameter '{p[0].Name}'.");
                 margs = new object[] { ProgramArgs.ToArray() };
             }
 
             try
             {
+                ConLine("Invoke method");
+
+                AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
                 var obj = EntryPoint.Invoke(null, margs);
 
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.Write("Function invoked. Returned: " + obj != null ? obj : "null");
+                ConLine("Function invoked. Returned: " + obj != null ? obj : "null");
                 Console.ForegroundColor = ConsoleColor.Gray;
             }
             catch (TargetInvocationException ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Invocation exception:");
-                Console.WriteLine(ex.InnerException.GetType().Name);
+                ConLine("Invocation exception:");
+                ConLine(ex.InnerException.GetType().Name);
                 Console.ForegroundColor = ConsoleColor.White;
-                Console.WriteLine(ex.InnerException.ToString());
+                ConLine(ex.InnerException.ToString());
             }
             catch (Exception ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(ex.GetType().Name);
+                ConLine(ex.GetType().Name);
                 Console.ForegroundColor = ConsoleColor.White;
-                Console.WriteLine(ex.ToString());
+                ConLine(ex.ToString());
             }
 
             Console.ForegroundColor = ConsoleColor.Gray;
-            Console.WriteLine("[RunDotNet] Program finished");
+            ConLine("Finished");
         }
+
+        private static Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
+        {
+            var file = SearchForAssembly(GetDllNameFromFull(args.Name));
+
+            if (file != null)
+                return Assembly.LoadFile(file.FullName);
+            else
+                return null;
+        }
+
+        private static FileInfo SearchForAssembly(string name)
+        {
+            List<string> folders = new List<string>() { Directory.GetCurrentDirectory(), GetAssemblyGAC_MSIL(name) };
+
+            foreach (var folder in folders)
+                if(Directory.Exists(folder))
+                    if (File.Exists(Path.Combine(folder, name)))
+                        return new FileInfo(Path.Combine(folder, name));
+
+            return null;
+        }
+
+        private static string GetAssemblyGAC_MSIL(string name)
+        {
+            var namenodll = name.EndsWith(".dll") ? name.Remove(name.Length - 4, 4) : name;
+            var gmpath = new DirectoryInfo(Path.Combine(Path.Combine(Path.Combine(new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.System)).Parent.FullName, "Microsoft.NET"), "assembly"), namenodll));
+
+            if (gmpath.Exists)
+            {
+                var files = gmpath.GetFiles(name, SearchOption.AllDirectories);
+
+                foreach (var file in files)
+                    return file.Directory.FullName;
+            }
+
+            return "";
+        }
+
+        private static string GetDllNameFromFull(string full)
+            => full.Split(',')[0] + ".dll"; // hack? 
+
+        private static void CurrentDomain_AssemblyLoad(object sender, AssemblyLoadEventArgs args)
+        {
+            ConLine("+ Assembly " + args.LoadedAssembly);
+        }
+
+        private static Module Asm_ModuleResolve(object sender, ResolveEventArgs e)
+        {
+            ConLine(sender.GetType().FullName);
+            var asm = sender as Assembly;
+            ConLine($"[{asm.GetName().Name}] {e.Name}");
+            return null;
+        }
+
+        static void ConLine(object line) => Console.WriteLine("[run.net] " + line);
 
         static void PrintMethod(MethodInfo m)
         {
             if (m == null)
             {
-                Console.WriteLine("Method not found.");
+                ConLine("Method not found.");
                 return;
             }
 
