@@ -23,7 +23,3 @@ Supported operating systems:
 # Authors
 
 [Yaroslav Kibysh (Dz3n)](https://github.com/feel-the-dz3n)
-
-# TODO
-
-- [ ] Mono Port
