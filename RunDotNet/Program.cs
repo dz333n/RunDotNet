@@ -72,6 +72,11 @@ namespace RunDotNet
                 Console.ForegroundColor = ConsoleColor.Red;
                 ConLine("Entry point not found.");
                 Console.ForegroundColor = ConsoleColor.Gray;
+
+                ConLine("Available methods:");
+                foreach (var method in GetAllMethods(asm))
+                    PrintMethod(method);
+
                 return;
             }
             else PrintMethod(EntryPoint);
@@ -89,13 +94,16 @@ namespace RunDotNet
 
             try
             {
+                Console.ForegroundColor = ConsoleColor.Yellow;
                 ConLine("Invoke method");
+                Console.ForegroundColor = ConsoleColor.Gray;
 
                 AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
                 var obj = EntryPoint.Invoke(null, margs);
 
                 Console.ForegroundColor = ConsoleColor.Green;
-                ConLine("Function invoked. Returned: " + obj != null ? obj : "null");
+                var resultstr = obj != null ? $"({obj.GetType().Name}) {obj.ToString()}" : "null";
+                ConLine("Function invoked. Returned: " + resultstr);
                 Console.ForegroundColor = ConsoleColor.Gray;
             }
             catch (TargetInvocationException ex)
@@ -185,6 +193,17 @@ namespace RunDotNet
             var old = Console.ForegroundColor;
 
             Console.ForegroundColor = ConsoleColor.Blue;
+
+            if (m.IsPublic)
+                Console.Write("public ");
+
+            if (m.IsPrivate)
+                Console.Write("private ");
+
+            if (m.IsStatic)
+                Console.Write("static ");
+
+            Console.ForegroundColor = ConsoleColor.Cyan;
             Console.Write(m.ReturnType.Name + " ");
 
             Console.ForegroundColor = ConsoleColor.Gray;
@@ -230,13 +249,35 @@ namespace RunDotNet
             }
 
             Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine(m.Name + ");");
+            Console.WriteLine(");");
 
             Console.ForegroundColor = old;
         }
 
+        static List<MethodInfo> GetAllMethods(Assembly asm)
+        {
+            List<MethodInfo> methods = new List<MethodInfo>();
+            var types = asm.GetTypes();
+
+            foreach (var type in types)
+                methods.AddRange(type.GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static));
+
+            return methods;
+        }
+
         static MethodInfo SearchEntryPoint(Assembly asm, string text)
         {
+            var methods = GetAllMethods(asm);
+
+            foreach(var method in methods)
+            {
+                if (text.ToLower() == method.DeclaringType.FullName.ToLower() + "." + method.Name.ToLower())
+                    return method;
+
+                if (text.ToLower() == method.Name.ToLower())
+                    return method;
+            }
+
             return null;
         }
 
